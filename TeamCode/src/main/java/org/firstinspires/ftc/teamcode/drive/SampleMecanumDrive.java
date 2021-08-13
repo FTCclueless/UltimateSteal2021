@@ -2,13 +2,20 @@ package org.firstinspires.ftc.teamcode.drive;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.drive.MecanumDrive;
 import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.followers.TrajectoryFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.profile.MotionProfile;
+import com.acmerobotics.roadrunner.profile.MotionProfileGenerator;
+import com.acmerobotics.roadrunner.profile.MotionState;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.trajectory.constraints.AngularVelocityConstraint;
@@ -17,6 +24,7 @@ import com.acmerobotics.roadrunner.trajectory.constraints.MinVelocityConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.ProfileAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
+import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,6 +37,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunner;
+import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 
 import java.util.ArrayList;
@@ -55,6 +64,26 @@ public class SampleMecanumDrive extends MecanumDrive {
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
 
+    private FtcDashboard dashboard;
+    private List<Pose2d> poseHistory;
+
+    private PIDFController turnController;
+    private MotionProfile turnProfile;
+    private double turnStart;
+
+    private NanoClock clock;
+
+    private String TAG = "SampleTankDrive";
+
+
+    public enum Mode {
+        IDLE,
+        TURN,
+        FOLLOW_TRAJECTORY
+    }
+
+    private Mode mode;
+
     public static double LATERAL_MULTIPLIER = 1;
 
     public static double VX_WEIGHT = 1;
@@ -72,10 +101,21 @@ public class SampleMecanumDrive extends MecanumDrive {
     private List<DcMotorEx> motors;
 
     private BNO055IMU imu;
+
     private VoltageSensor batteryVoltageSensor;
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
+
+        dashboard = FtcDashboard.getInstance();
+        dashboard.setTelemetryTransmissionInterval(25);
+
+        clock = NanoClock.system();
+
+        mode = Mode.IDLE;
+
+        turnController = new PIDFController(HEADING_PID);
+        turnController.setInputBounds(0, 2 * Math.PI);
 
         follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
                 new Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5);
@@ -129,6 +169,24 @@ public class SampleMecanumDrive extends MecanumDrive {
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
     }
 
+    public void turnAsync(double angle) {
+        double heading = getPoseEstimate().getHeading();
+        turnProfile = MotionProfileGenerator.generateSimpleMotionProfile(
+                new MotionState(heading, 0, 0, 0),
+                new MotionState(heading + angle, 0, 0, 0),
+                DriveConstants.MAX_ANG_VEL,
+                DriveConstants.MAX_ANG_ACCEL,
+                0.0
+        );
+        turnStart = clock.seconds();
+        mode = Mode.TURN;
+    }
+
+    public void turn(double angle) {
+        turnAsync(angle);
+        waitForIdle();
+    }
+
     public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
         return new TrajectoryBuilder(startPose, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
     }
@@ -147,19 +205,6 @@ public class SampleMecanumDrive extends MecanumDrive {
                 VEL_CONSTRAINT, ACCEL_CONSTRAINT,
                 MAX_ANG_VEL, MAX_ANG_ACCEL
         );
-    }
-
-    public void turnAsync(double angle) {
-        trajectorySequenceRunner.followTrajectorySequenceAsync(
-                trajectorySequenceBuilder(getPoseEstimate())
-                        .turn(angle)
-                        .build()
-        );
-    }
-
-    public void turn(double angle) {
-        turnAsync(angle);
-        waitForIdle();
     }
 
     public void followTrajectoryAsync(Trajectory trajectory) {
@@ -185,13 +230,92 @@ public class SampleMecanumDrive extends MecanumDrive {
     }
 
     public Pose2d getLastError() {
-        return trajectorySequenceRunner.getLastPoseError();
+        switch (mode) {
+            case FOLLOW_TRAJECTORY:
+                return follower.getLastError();
+            case TURN:
+                return new Pose2d(0, 0, turnController.getLastError());
+            case IDLE:
+                return new Pose2d();
+        }
+        throw new AssertionError();
     }
 
     public void update() {
         updatePoseEstimate();
-        DriveSignal signal = trajectorySequenceRunner.update(getPoseEstimate(), getPoseVelocity());
-        if (signal != null) setDriveSignal(signal);
+
+        Pose2d currentPose = getPoseEstimate();
+        Pose2d lastError = getLastError();
+
+        poseHistory.add(currentPose);
+
+        TelemetryPacket packet = new TelemetryPacket();
+        Canvas fieldOverlay = packet.fieldOverlay();
+
+        packet.put("mode", mode);
+
+        packet.put("x", currentPose.getX());
+        packet.put("y", currentPose.getY());
+        packet.put("heading", currentPose.getHeading());
+
+        packet.put("xError", lastError.getX());
+        packet.put("yError", lastError.getY());
+        packet.put("headingError", lastError.getHeading());
+
+        switch (mode) {
+            case IDLE:
+                // do nothing
+                break;
+            case TURN: {
+                double t = clock.seconds() - turnStart;
+
+                MotionState targetState = turnProfile.get(t);
+
+                turnController.setTargetPosition(targetState.getX());
+
+                double correction = turnController.update(currentPose.getHeading());
+
+                double targetOmega = targetState.getV();
+                double targetAlpha = targetState.getA();
+                setDriveSignal(new DriveSignal(new Pose2d(
+                        0, 0, targetOmega + correction
+                ), new Pose2d(
+                        0, 0, targetAlpha
+                )));
+
+                if (t >= turnProfile.duration()) {
+                    mode = Mode.IDLE;
+                    setDriveSignal(new DriveSignal());
+                }
+
+                break;
+            }
+            case FOLLOW_TRAJECTORY: {
+                setDriveSignal(follower.update(currentPose));
+
+                Trajectory trajectory = follower.getTrajectory();
+
+                fieldOverlay.setStrokeWidth(1);
+                fieldOverlay.setStroke("4CAF50");
+                DashboardUtil.drawSampledPath(fieldOverlay, trajectory.getPath());
+                double t = follower.elapsedTime();
+                DashboardUtil.drawRobot(fieldOverlay, trajectory.get(t));
+
+                fieldOverlay.setStroke("#3F51B5");
+                DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
+                DashboardUtil.drawRobot(fieldOverlay, currentPose);
+
+                if (!follower.isFollowing()) {
+                    mode = Mode.IDLE;
+                    setDriveSignal(new DriveSignal());
+                }
+
+                break;
+            }
+        }
+        fieldOverlay.setStroke("#3F51B5");
+        DashboardUtil.drawRobot(fieldOverlay, currentPose);
+        dashboard.sendTelemetryPacket(packet);
     }
 
     public void waitForIdle() {
