@@ -39,6 +39,9 @@ import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuild
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunner;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
+import org.openftc.revextensions2.ExpansionHubEx;
+import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.RevBulkData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,8 +100,11 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private TrajectoryFollower follower;
 
-    private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
+
+    static RevBulkData bulkData;
+    static ExpansionHubEx expansionHub1, expansionHub2;
+    static ExpansionHubMotor leftFront, leftRear, rightRear, rightFront;
 
     private BNO055IMU imu;
 
@@ -128,20 +134,20 @@ public class SampleMecanumDrive extends MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        // TODO: adjust the names of the following hardware devices to match your configuration
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
-        // TODO: if your hub is mounted vertically, remap the IMU axes so that the z-axis points
-        // upward (normal to the floor) using a command like the following:
-        // BNO055IMUUtil.remapAxes(imu, AxesOrder.XYZ, AxesSigns.NPN);
+        expansionHub1 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 1");
+        leftFront =     (ExpansionHubMotor) hardwareMap.dcMotor.get("leftFront");
+        leftRear =      (ExpansionHubMotor) hardwareMap.dcMotor.get("leftRear");
+        rightRear =     (ExpansionHubMotor) hardwareMap.dcMotor.get("rightRear");
+        rightFront =    (ExpansionHubMotor) hardwareMap.dcMotor.get("rightFront");
 
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-        leftRear = hardwareMap.get(DcMotorEx.class, "leftRear");
-        rightRear = hardwareMap.get(DcMotorEx.class, "rightRear");
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
+        expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
+        // add more motors here
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -167,6 +173,12 @@ public class SampleMecanumDrive extends MecanumDrive {
         // for instance, setLocalizer(new ThreeTrackingWheelLocalizer(...));
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
+    }
+
+    public static void getEncoders(){
+        bulkData = expansionHub1.getBulkInputData();
+        //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
+        // you can set the bulkData to the other expansion hub to get data from the other one
     }
 
     public void turnAsync(double angle) {
