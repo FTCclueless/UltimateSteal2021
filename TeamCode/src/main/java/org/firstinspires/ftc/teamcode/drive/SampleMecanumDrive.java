@@ -75,7 +75,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     private MotionProfile turnProfile;
     private double turnStart;
 
-    private NanoClock clock;
+    long lastLoopTime;
 
     private String TAG = "SampleTankDrive";
 
@@ -103,13 +103,21 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private VoltageSensor batteryVoltageSensor;
 
+    Localizer localizer;
+
+    static int[] encoders;
+    static int[] encodersVel;
+
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
+
+        encoders = new int[3];
+        encodersVel = new int[3];
 
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
 
-        clock = NanoClock.system();
+        lastLoopTime = System.nanoTime();
 
         turnController = new PIDFController(HEADING_PID);
         turnController.setInputBounds(0, 2 * Math.PI);
@@ -162,6 +170,8 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         // TODO: if desired, use setLocalizer() to change the localization method
         // for instance, setLocalizer(new ThreeTrackingWheelLocalizer(...));
+        localizer = new Localizer();
+        setLocalizer(localizer);
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
         currentTrajectorySequence = new ArrayList<>();
@@ -169,6 +179,13 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public static void getEncoders(){
         bulkData = expansionHub1.getBulkInputData();
+        encoders[0] = bulkData.getMotorCurrentPosition(leftRear);
+        encoders[1] = bulkData.getMotorCurrentPosition(leftFront);
+        encoders[2] = bulkData.getMotorCurrentPosition(rightRear);
+        encoders[0] = bulkData.getMotorVelocity(leftRear);
+        encoders[1] = bulkData.getMotorVelocity(leftFront);
+        encoders[2] = bulkData.getMotorVelocity(rightRear);
+
         //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
         // you can set the bulkData to the other expansion hub to get data from the other one
     }
@@ -236,8 +253,19 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public Pose2d getLastError() {return trajectorySequenceRunner.getLastPoseError();}
 
-    public void update() {
+    public void updateEstimate(){
+        getEncoders();
+        localizer.setEncoders(encoders);
+        localizer.setEncodersVel(encodersVel);
         updatePoseEstimate();
+    }
+
+    public void update() {
+        long currentTime = System.nanoTime();
+        double loopTime = (currentTime-lastLoopTime)/1000000000.0;
+        lastLoopTime = currentTime;
+
+        updateEstimate();
 
         Pose2d currentPose = getPoseEstimate();
         Pose2d lastError = getLastError();
@@ -246,6 +274,8 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         TelemetryPacket packet = new TelemetryPacket();
         Canvas fieldOverlay = packet.fieldOverlay();
+
+        packet.put("loopTime", loopTime);
 
         packet.put("x", currentPose.getX());
         packet.put("y", currentPose.getY());
