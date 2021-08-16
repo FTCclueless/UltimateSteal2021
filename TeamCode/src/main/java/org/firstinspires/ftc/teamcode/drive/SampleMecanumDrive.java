@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -30,6 +32,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -69,7 +72,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
 
     private FtcDashboard dashboard;
-    private List<Pose2d> poseHistory;
+    private ArrayList<Pose2d> poseHistory;
 
     private PIDFController turnController;
     private MotionProfile turnProfile;
@@ -108,6 +111,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     static int[] encoders;
     static int[] encodersVel;
 
+    public double loopTime = 0;
+
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
@@ -139,15 +144,14 @@ public class SampleMecanumDrive extends MecanumDrive {
         imu.initialize(parameters);
 
         expansionHub1 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 1");
-        leftFront =     (ExpansionHubMotor) hardwareMap.dcMotor.get("leftFront");
-        leftRear =      (ExpansionHubMotor) hardwareMap.dcMotor.get("leftRear");
-        rightRear =     (ExpansionHubMotor) hardwareMap.dcMotor.get("rightRear");
-        rightFront =    (ExpansionHubMotor) hardwareMap.dcMotor.get("rightFront");
+        leftFront =     (ExpansionHubMotor) hardwareMap.dcMotor.get("lf");
+        leftRear =      (ExpansionHubMotor) hardwareMap.dcMotor.get("lr");
+        rightRear =     (ExpansionHubMotor) hardwareMap.dcMotor.get("rr");
+        rightFront =    (ExpansionHubMotor) hardwareMap.dcMotor.get("rf");
 
-
-        expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
         // add more motors here
 
+        // expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
         for (DcMotorEx motor : motors) {
@@ -155,6 +159,10 @@ public class SampleMecanumDrive extends MecanumDrive {
             motorConfigurationType.setAchieveableMaxRPMFraction(1.0);
             motor.setMotorType(motorConfigurationType);
         }
+        setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        rightRear.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
         if (RUN_USING_ENCODER) {
             setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -166,6 +174,7 @@ public class SampleMecanumDrive extends MecanumDrive {
             setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
         }
 
+
         // TODO: reverse any motors using DcMotor.setDirection()
 
         // TODO: if desired, use setLocalizer() to change the localization method
@@ -174,17 +183,18 @@ public class SampleMecanumDrive extends MecanumDrive {
         setLocalizer(localizer);
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
-        currentTrajectorySequence = new ArrayList<>();
+        currentTrajectorySequence = new ArrayList<Trajectory>();
+        poseHistory = new ArrayList<Pose2d>();
     }
 
     public static void getEncoders(){
         bulkData = expansionHub1.getBulkInputData();
-        encoders[0] = bulkData.getMotorCurrentPosition(leftRear);
+        encoders[0] = bulkData.getMotorCurrentPosition(rightFront);
         encoders[1] = bulkData.getMotorCurrentPosition(leftFront);
         encoders[2] = bulkData.getMotorCurrentPosition(rightRear);
-        encoders[0] = bulkData.getMotorVelocity(leftRear);
-        encoders[1] = bulkData.getMotorVelocity(leftFront);
-        encoders[2] = bulkData.getMotorVelocity(rightRear);
+        encodersVel[0] = bulkData.getMotorVelocity(rightFront);
+        encodersVel[1] = bulkData.getMotorVelocity(leftFront);
+        encodersVel[2] = bulkData.getMotorVelocity(rightRear);
 
         //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
         // you can set the bulkData to the other expansion hub to get data from the other one
@@ -262,7 +272,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public void update() {
         long currentTime = System.nanoTime();
-        double loopTime = (currentTime-lastLoopTime)/1000000000.0;
+        loopTime = (currentTime-lastLoopTime)/1000000000.0;
         lastLoopTime = currentTime;
 
         updateEstimate();
