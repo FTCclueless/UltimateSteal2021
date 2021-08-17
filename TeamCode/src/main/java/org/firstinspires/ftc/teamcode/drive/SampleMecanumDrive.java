@@ -198,7 +198,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         encodersVel[0] = bulkData.getMotorVelocity(rightFront);
         encodersVel[1] = bulkData.getMotorVelocity(leftFront);
         encodersVel[2] = bulkData.getMotorVelocity(rightRear);
-
         //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
         // you can set the bulkData to the other expansion hub to get data from the other one
     }

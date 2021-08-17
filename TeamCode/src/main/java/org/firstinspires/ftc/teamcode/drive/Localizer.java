@@ -11,7 +11,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
     int[] lastEncoders = {0,0,0};
     int[] encoders = {0,0,0};
     int[] encodersVel = {0,0,0};
-    //int[] lastEncodersVel = {0,0,0};
     double lastHeading = 0;
     double odoHeading = 0;
     double offsetHeading = 0;
@@ -110,7 +109,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         lastHeading = heading;
         for (int i = 0; i < 3; i ++) {
             lastEncoders[i] = encoders[i];
-            //lastEncodersVel[i] = encodersVel[i];
         }
 
         lastRobotVel = new Pose2d(currentRobotVel.getX(),currentRobotVel.getY(),currentRobotVel.getHeading());
