@@ -106,9 +106,10 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             double percentX =   (deltaVelX/(2.0*t2)       + deltaVelX * pos       + lastRelVel.getX()/numLoops)      /(lastRelVel.getX()+deltaVelX/2.0);
             double percentY =   (deltaVelY/(2.0*t2)       + deltaVelY * pos       + lastRelVel.getY()/numLoops)      /(lastRelVel.getY()+deltaVelY/2.0);
             double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
-            simHeading += percentHed*deltaHeading;
+            simHeading += percentHed*deltaHeading/2.0;
             x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
             y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
+            simHeading += percentHed*deltaHeading/2.0;
         }
 
 
