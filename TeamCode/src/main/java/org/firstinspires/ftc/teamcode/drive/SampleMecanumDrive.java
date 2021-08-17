@@ -109,7 +109,6 @@ public class SampleMecanumDrive extends MecanumDrive {
     Localizer localizer;
 
     static int[] encoders;
-    static int[] encodersVel;
 
     public double loopTime = 0;
     int loops = 0;
@@ -120,7 +119,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
         encoders = new int[3];
-        encodersVel = new int[3];
 
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
@@ -195,9 +193,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         encoders[0] = bulkData.getMotorCurrentPosition(rightFront);
         encoders[1] = bulkData.getMotorCurrentPosition(leftFront);
         encoders[2] = bulkData.getMotorCurrentPosition(rightRear);
-        encodersVel[0] = bulkData.getMotorVelocity(rightFront);
-        encodersVel[1] = bulkData.getMotorVelocity(leftFront);
-        encodersVel[2] = bulkData.getMotorVelocity(rightRear);
         //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
         // you can set the bulkData to the other expansion hub to get data from the other one
     }
@@ -268,7 +263,6 @@ public class SampleMecanumDrive extends MecanumDrive {
     public void updateEstimate(){
         getEncoders();
         localizer.setEncoders(encoders);
-        localizer.setEncodersVel(encodersVel);
         updatePoseEstimate();
     }
 

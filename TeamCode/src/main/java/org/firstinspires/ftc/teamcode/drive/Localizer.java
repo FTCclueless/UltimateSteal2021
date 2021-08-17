@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 public class Localizer implements com.acmerobotics.roadrunner.localization.Localizer {
     int[] lastEncoders = {0,0,0};
     int[] encoders = {0,0,0};
-    int[] encodersVel = {0,0,0};
     double lastHeading = 0;
     double odoHeading = 0;
     double offsetHeading = 0;
@@ -18,8 +17,10 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
     Pose2d currentPose;
     double x = 0;
     double y = 0;
-    Pose2d currentRobotVel;
-    Pose2d lastRobotVel = new Pose2d(0,0,0);
+    Pose2d currentVel = new Pose2d(0,0,0);
+    Pose2d currentRelVel = new Pose2d(0,0,0);
+    Pose2d lastRelVel = new Pose2d(0,0,0);
+    long lastTime = System.nanoTime();
 
     @NotNull
     @Override
@@ -45,11 +46,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             encoders[i] = arr[i];
         }
     }
-    public void setEncodersVel (int[] arr){
-        for (int i = 0; i < 3; i ++){
-            encodersVel[i] = arr[i];
-        }
-    }
 
     @Override
     public void setPoseEstimate(@NotNull Pose2d pose2d) {
@@ -59,14 +55,15 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
     @Nullable
     @Override
     public Pose2d getPoseVelocity() {
-        return currentRobotVel;
+        return currentVel;
     }
 
     @Override
     public void update() {
-        double fwrdSpeed = (encodersVel[0] + encodersVel[1])/(2.0*ticksToInches);
-        double headSpeed = (encodersVel[0] - encodersVel[1])/(ticksToInches*(13.443402782));
-        double horSpeed = (encodersVel[2]/ticksToInches + headSpeed*6.25);
+
+        long currentTime = System.nanoTime();
+        double loopTime = (currentTime-lastTime)/1000000000.0;
+        lastTime = currentTime;
 
         double deltaRight = encoders[0] - lastEncoders[0];
         double deltaLeft = encoders[1] - lastEncoders[1];
@@ -74,44 +71,51 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         double relDeltaX = (deltaLeft + deltaRight)/(2.0*ticksToInches);
         odoHeading = (encoders[0] - encoders[1])/(ticksToInches*(13.443402782)); //(encoders[0] - encoders[1])/(ticksToInches*(15.625))*1.162280135
         double heading = odoHeading + offsetHeading;
-
-        currentRobotVel = new Pose2d(Math.cos(heading)*fwrdSpeed - Math.sin(heading)*horSpeed,Math.cos(heading)*horSpeed + Math.sin(heading)*fwrdSpeed,headSpeed);
-
-
-
         double deltaHeading = heading - lastHeading;
         double relDeltaY = deltaHorizontal/ticksToInches + deltaHeading*6.25;
-        double simDeltaHeading = (heading - lastHeading)/50.0;
-        double simHeading = lastHeading + simDeltaHeading/2;
-        double numLoops = 50;
 
+
+        double relVelX = relDeltaX/loopTime;
+        double relVelY = relDeltaY/loopTime;
+        double relVelHeading = deltaHeading/loopTime;
+
+
+        currentVel = new Pose2d(Math.cos(heading)*relVelX - Math.sin(heading)*relVelY,Math.cos(heading)*relVelY + Math.sin(heading)*relVelX,relVelHeading);
+
+        lastRelVel = new Pose2d(currentRelVel.getX(),currentRelVel.getY(),currentRelVel.getHeading());
+        currentRelVel = new Pose2d(relVelX,relVelY,relVelHeading);
+
+
+        /*
+        double simDeltaHeading = (heading - lastHeading)/50.0;
         for (int i = 0; i < numLoops; i ++) {
             x += Math.cos(simHeading) * relDeltaX/numLoops - Math.sin(simHeading) * relDeltaY/numLoops;
             y += Math.sin(simHeading) * relDeltaX/numLoops + Math.cos(simHeading) * relDeltaY/numLoops;
             simHeading += simDeltaHeading;
         }
-
-
-        /*
-        double deltaVelHeading = currentRobotVel.getHeading() - lastRobotVel.getHeading();
-        double deltaVelX = currentRobotVel.getX() - lastRobotVel.getX();
-        double deltaVelY = currentRobotVel.getY() - lastRobotVel.getY();
-        for (int i = 0; i < numLoops; i ++) {
-            double percentX = (deltaVelX/(2.0*Math.pow(numLoops,2) + deltaVelX*(double)(i)/Math.pow(numLoops,2)) + lastRobotVel.getX()/numLoops)/(lastRobotVel.getX()+deltaVelX/2.0);
-            double percentY = (deltaVelY/(2.0*Math.pow(numLoops,2) + deltaVelY*(double)(i)/Math.pow(numLoops,2)) + lastRobotVel.getY()/numLoops)/(lastRobotVel.getY()+deltaVelY/2.0);
-            double percentHed = (deltaVelHeading/(2.0*Math.pow(numLoops,2) + deltaVelHeading*(double)(i)/Math.pow(numLoops,2)) + lastRobotVel.getHeading()/numLoops)/(lastRobotVel.getHeading()+deltaVelHeading/2.0);
-            simHeading += percentHed*deltaHeading;
-            x += Math.cos(simHeading) * relDeltaX * percentX - Math.sin(simHeading) * relDeltaY * percentY;
-            y += Math.sin(simHeading) * relDeltaX * percentX + Math.cos(simHeading) * relDeltaY * percentY;
-        }
         */
+
+        double simHeading = lastHeading;
+        double numLoops = 50;
+        double deltaVelHeading = currentRelVel.getHeading() - lastRelVel.getHeading();
+        double deltaVelX = currentRelVel.getX() - lastRelVel.getX();
+        double deltaVelY = currentRelVel.getY() - lastRelVel.getY();
+        double t2 = Math.pow(numLoops,2);
+        for (int i = 0; i < numLoops; i ++) {
+            double pos = ((double)i)/t2;
+            double percentX =   (deltaVelX/(2.0*t2)       + deltaVelX * pos       + lastRelVel.getX()/numLoops)      /(lastRelVel.getX()+deltaVelX/2.0);
+            double percentY =   (deltaVelY/(2.0*t2)       + deltaVelY * pos       + lastRelVel.getY()/numLoops)      /(lastRelVel.getY()+deltaVelY/2.0);
+            double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
+            simHeading += percentHed*deltaHeading;
+            x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
+            y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
+        }
+
 
         lastHeading = heading;
         for (int i = 0; i < 3; i ++) {
             lastEncoders[i] = encoders[i];
         }
-
-        lastRobotVel = new Pose2d(currentRobotVel.getX(),currentRobotVel.getY(),currentRobotVel.getHeading());
         currentPose = new Pose2d(x,y,heading);
     }
 }
