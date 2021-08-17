@@ -25,9 +25,9 @@ public class LocalizationTest extends LinearOpMode {
         waitForStart();
 
         while (!isStopRequested()) {
-            double forward = gamepad1.left_stick_y * -1;
-            double left = gamepad1.left_stick_x;
-            double turn = gamepad1.right_stick_x;
+            double forward = gamepad1.left_stick_y * -0.5;
+            double left = gamepad1.left_stick_x * 0.5;
+            double turn = gamepad1.right_stick_x * 0.5;
 
             drive.setMotorPowers((forward+left+turn), (forward-left+turn), (forward+left-turn), (forward-left-turn));
 

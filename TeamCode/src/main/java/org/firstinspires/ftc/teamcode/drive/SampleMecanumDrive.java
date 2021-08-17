@@ -112,6 +112,9 @@ public class SampleMecanumDrive extends MecanumDrive {
     static int[] encodersVel;
 
     public double loopTime = 0;
+    int loops = 0;
+
+    double totalTime = 0;
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
@@ -274,6 +277,15 @@ public class SampleMecanumDrive extends MecanumDrive {
         long currentTime = System.nanoTime();
         loopTime = (currentTime-lastLoopTime)/1000000000.0;
         lastLoopTime = currentTime;
+
+        totalTime += loopTime;
+
+        loops ++;
+
+        if (loops%3 == 0){
+            localizer.updateHeading(imu.getAngularOrientation().firstAngle);
+        }
+        Log.e("averageLoopTime",totalTime/(double)loops+"");
 
         updateEstimate();
 
