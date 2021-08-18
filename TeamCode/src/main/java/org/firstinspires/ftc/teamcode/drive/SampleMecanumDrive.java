@@ -75,10 +75,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     private ArrayList<Pose2d> poseHistory;
 
     private PIDFController turnController;
-    private MotionProfile turnProfile;
-    private double turnStart;
-
-    long lastLoopTime;
+    //private MotionProfile turnProfile;
+    //private double turnStart;
 
     private String TAG = "SampleTankDrive";
 
@@ -109,10 +107,8 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     static int[] encoders;
 
-    public double loopTime = 0;
     int loops = 0;
-
-    double totalTime = 0;
+    long startTime;
 
     Pose2d currentPose;
 
@@ -123,8 +119,6 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
-
-        lastLoopTime = System.nanoTime();
 
         turnController = new PIDFController(HEADING_PID);
         turnController.setInputBounds(0, 2 * Math.PI);
@@ -186,6 +180,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
         poseHistory = new ArrayList<Pose2d>();
+        startTime = System.nanoTime();
     }
 
     public static void getEncoders(){
@@ -261,23 +256,15 @@ public class SampleMecanumDrive extends MecanumDrive {
     }
 
     public void update() {
-        long currentTime = System.nanoTime();
-        loopTime = (currentTime-lastLoopTime)/1000000000.0;
-        lastLoopTime = currentTime;
-
-        totalTime += loopTime;
-
+        double totalTime = (System.nanoTime() - startTime)/1000000000.0;
         loops ++;
 
         if (loops%3 == 0){
             localizer.updateHeading(imu.getAngularOrientation().firstAngle);
         }
-        Log.e("averageLoopTime",totalTime/(double)loops+"");
-
         updateEstimate();
 
-
-        poseHistory.add(currentPose);
+        Log.e("averageLoopTime","" + totalTime/(double)loops);
 
         DriveSignal signal = trajectorySequenceRunner.update(currentPose, getPoseVelocity());
         if (signal != null) {

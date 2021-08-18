@@ -52,6 +52,8 @@ public class TrajectorySequenceRunner {
 
     private Pose2d lastPoseError = new Pose2d();
 
+    Long lastLoopTime;
+
     List<TrajectoryMarker> remainingMarkers = new ArrayList<>();
 
     private final FtcDashboard dashboard;
@@ -67,6 +69,8 @@ public class TrajectorySequenceRunner {
 
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
+
+        lastLoopTime = System.nanoTime();
     }
 
     public void followTrajectorySequenceAsync(TrajectorySequence trajectorySequence) {
@@ -78,6 +82,10 @@ public class TrajectorySequenceRunner {
 
     public @Nullable
     DriveSignal update(Pose2d poseEstimate, Pose2d poseVelocity) {
+        long currentTime = System.nanoTime();
+        double loopTime = (currentTime-lastLoopTime)/1000000000.0;
+        lastLoopTime = currentTime;
+
         Pose2d targetPose = null;
         DriveSignal driveSignal = null;
 
@@ -183,6 +191,7 @@ public class TrajectorySequenceRunner {
         if (POSE_HISTORY_LIMIT > -1 && poseHistory.size() > POSE_HISTORY_LIMIT) {
             poseHistory.removeFirst();
         }
+        packet.put("loopTime", loopTime);
 
         packet.put("x", poseEstimate.getX());
         packet.put("y", poseEstimate.getY());
