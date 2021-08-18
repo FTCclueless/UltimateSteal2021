@@ -107,8 +107,8 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
             //robot doesn't know how to do L'hoptial
             if ((lastRelVel.getY()+deltaVelY/2.0) == 0){percentX = 1/numLoops;}
-            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentX = 1/numLoops;}
-            if ((lastRelVel.getHeading()+deltaVelHeading/2.0) == 0){percentX = 1/numLoops;}
+            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentY = 1/numLoops;}
+            if ((lastRelVel.getHeading()+deltaVelHeading/2.0) == 0){percentHed = 1/numLoops;}
             simHeading += percentHed*deltaHeading/2.0;
             x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
             y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
