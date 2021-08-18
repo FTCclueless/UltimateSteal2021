@@ -17,6 +17,8 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
     Pose2d currentPose;
     double x = 0;
     double y = 0;
+    double lastX = 0;
+    double lastY = 0;
     Pose2d currentVel = new Pose2d(0,0,0);
     Pose2d currentRelVel = new Pose2d(0,0,0);
     Pose2d lastRelVel = new Pose2d(0,0,0);
@@ -79,9 +81,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         double relVelY = relDeltaY/loopTime;
         double relVelHeading = deltaHeading/loopTime;
 
-
-        currentVel = new Pose2d(Math.cos(heading)*relVelX - Math.sin(heading)*relVelY,Math.cos(heading)*relVelY + Math.sin(heading)*relVelX,relVelHeading);
-
         lastRelVel = new Pose2d(currentRelVel.getX(),currentRelVel.getY(),currentRelVel.getHeading());
         currentRelVel = new Pose2d(relVelX,relVelY,relVelHeading);
 
@@ -111,8 +110,11 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
             simHeading += percentHed*deltaHeading/2.0;
         }
+        
+        currentVel = new Pose2d((x-lastX)/loopTime,(y-lastY)/loopTime,relVelHeading);
 
-
+        lastX = x;
+        lastY = y;
         lastHeading = heading;
         for (int i = 0; i < 3; i ++) {
             lastEncoders[i] = encoders[i];
