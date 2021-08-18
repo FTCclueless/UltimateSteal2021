@@ -89,7 +89,6 @@ public class SampleMecanumDrive extends MecanumDrive {
     public static double OMEGA_WEIGHT = 1;
 
     private TrajectorySequenceRunner trajectorySequenceRunner;
-    private ArrayList<Trajectory> currentTrajectorySequence;
 
     private static final TrajectoryVelocityConstraint VEL_CONSTRAINT = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
     private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = getAccelerationConstraint(MAX_ACCEL);
@@ -114,6 +113,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     int loops = 0;
 
     double totalTime = 0;
+
+    Pose2d currentPose;
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
@@ -184,7 +185,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         setLocalizer(localizer);
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
-        currentTrajectorySequence = new ArrayList<Trajectory>();
         poseHistory = new ArrayList<Pose2d>();
     }
 
@@ -252,18 +252,12 @@ public class SampleMecanumDrive extends MecanumDrive {
         waitForIdle();
     }
 
-    public void followTrajectorySequenceDisplay(TrajectorySequence trajectorySequence, ArrayList<Trajectory> trajecories) {
-        currentTrajectorySequence = trajecories;
-        followTrajectorySequenceAsync(trajectorySequence);
-        waitForIdle();
-    }
-
     public Pose2d getLastError() {return trajectorySequenceRunner.getLastPoseError();}
 
     public void updateEstimate(){
         getEncoders();
         localizer.setEncoders(encoders);
-        updatePoseEstimate();
+        currentPose = getPoseEstimate();
     }
 
     public void update() {
@@ -282,44 +276,13 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         updateEstimate();
 
-        Pose2d currentPose = getPoseEstimate();
-        Pose2d lastError = getLastError();
 
         poseHistory.add(currentPose);
 
-        TelemetryPacket packet = new TelemetryPacket();
-        Canvas fieldOverlay = packet.fieldOverlay();
-
-        packet.put("loopTime", loopTime);
-
-        packet.put("x", currentPose.getX());
-        packet.put("y", currentPose.getY());
-        packet.put("heading", currentPose.getHeading());
-
-        packet.put("xError", lastError.getX());
-        packet.put("yError", lastError.getY());
-        packet.put("headingError", lastError.getHeading());
-
-
-        DriveSignal signal = trajectorySequenceRunner.update(getPoseEstimate(), getPoseVelocity());
+        DriveSignal signal = trajectorySequenceRunner.update(currentPose, getPoseVelocity());
         if (signal != null) {
             setDriveSignal(signal);
         }
-        if (currentTrajectorySequence != null && signal != null){
-            fieldOverlay.setStrokeWidth(1);
-            fieldOverlay.setStroke("4CAF50");
-            for (int i = 0; i < currentTrajectorySequence.size(); i ++){
-                DashboardUtil.drawSampledPath(fieldOverlay, currentTrajectorySequence.get(i).getPath());
-            }
-
-            fieldOverlay.setStroke("#3F51B5");
-            DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
-            DashboardUtil.drawRobot(fieldOverlay, currentPose);
-        }
-
-        fieldOverlay.setStroke("#3F51B5");
-        DashboardUtil.drawRobot(fieldOverlay, currentPose);
-        dashboard.sendTelemetryPacket(packet);
     }
 
     public void waitForIdle() {
