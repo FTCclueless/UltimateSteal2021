@@ -110,7 +110,7 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
             simHeading += percentHed*deltaHeading/2.0;
         }
-        
+
         currentVel = new Pose2d((x-lastX)/loopTime,(y-lastY)/loopTime,relVelHeading);
 
         lastX = x;
