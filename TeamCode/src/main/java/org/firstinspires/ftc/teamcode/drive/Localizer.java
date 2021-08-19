@@ -39,7 +39,11 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         while (headingDif < Math.toRadians(-180)){
             headingDif += Math.toRadians(360);
         }
-        offsetHeading = (offsetHeading)*0.1 + headingDif*0.9;
+        //ToDo: Tune these weights
+        //We are getting issues with jittering in motion feedback.
+        //This might be due to imu lag.
+        //We should consider tuning these weights
+        offsetHeading = (offsetHeading)*0.46 + headingDif*0.54; // 0.1, 0.9
 
     }
 

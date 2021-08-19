@@ -249,9 +249,12 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public Pose2d getLastError() {return trajectorySequenceRunner.getLastPoseError();}
 
-    public void updateEstimate(){
+    public void updateEstimate(int numLoops){
         getEncoders();
         localizer.setEncoders(encoders);
+        if (numLoops%3 == 0){
+            localizer.updateHeading(imu.getAngularOrientation().firstAngle);
+        }
         currentPose = getPoseEstimate();
     }
 
@@ -259,10 +262,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         double totalTime = (System.nanoTime() - startTime)/1000000000.0;
         loops ++;
 
-        if (loops%3 == 0){
-            localizer.updateHeading(imu.getAngularOrientation().firstAngle);
-        }
-        updateEstimate();
+        updateEstimate(loops);
 
         Log.e("averageLoopTime","" + totalTime/(double)loops);
 
