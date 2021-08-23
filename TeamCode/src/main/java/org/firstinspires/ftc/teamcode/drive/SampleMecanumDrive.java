@@ -110,7 +110,10 @@ public class SampleMecanumDrive extends MecanumDrive {
     int loops = 0;
     long startTime;
 
-    Pose2d currentPose;
+    public Pose2d currentPose;
+    public Pose2d currentVelocity;
+
+
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
@@ -256,6 +259,7 @@ public class SampleMecanumDrive extends MecanumDrive {
             localizer.updateHeading(imu.getAngularOrientation().firstAngle);
         }
         currentPose = getPoseEstimate();
+        currentVelocity = getPoseVelocity();
     }
 
     public void update() {
@@ -266,7 +270,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         Log.e("averageLoopTime","" + totalTime/(double)loops);
 
-        DriveSignal signal = trajectorySequenceRunner.update(currentPose, getPoseVelocity());
+        DriveSignal signal = trajectorySequenceRunner.update(currentPose, currentVelocity);
         if (signal != null) {
             setDriveSignal(signal);
         }

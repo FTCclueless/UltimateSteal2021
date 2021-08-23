@@ -43,7 +43,7 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         //We are getting issues with jittering in motion feedback.
         //This might be due to imu lag.
         //We should consider tuning these weights
-        offsetHeading = (offsetHeading)*0.46 + headingDif*0.54; // 0.1, 0.9
+        offsetHeading = (offsetHeading)*0.1 + headingDif*0.9; // 0.1, 0.9
 
     }
 
@@ -84,8 +84,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         double relVelX = relDeltaX/loopTime;
         double relVelY = relDeltaY/loopTime;
         double relVelHeading = deltaHeading/loopTime;
-
-        lastRelVel = new Pose2d(currentRelVel.getX(),currentRelVel.getY(),currentRelVel.getHeading());
         currentRelVel = new Pose2d(relVelX,relVelY,relVelHeading);
 
 
@@ -110,8 +108,8 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             double percentY =   (deltaVelY/(2.0*t2)       + deltaVelY * pos       + lastRelVel.getY()/numLoops)      /(lastRelVel.getY()+deltaVelY/2.0);
             double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
             //robot doesn't know how to do L'hoptial
-            if ((lastRelVel.getY()+deltaVelY/2.0) == 0){percentX = 1/numLoops;}
-            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentY = 1/numLoops;}
+            if ((lastRelVel.getY()+deltaVelY/2.0) == 0){percentY = 1/numLoops;}
+            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentX = 1/numLoops;}
             if ((lastRelVel.getHeading()+deltaVelHeading/2.0) == 0){percentHed = 1/numLoops;}
             simHeading += percentHed*deltaHeading/2.0;
             x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
@@ -119,7 +117,16 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             simHeading += percentHed*deltaHeading/2.0;
         }
 
-        currentVel = new Pose2d((x-lastX)/loopTime,(y-lastY)/loopTime,relVelHeading);
+        double w = 0.25;
+        double newVelX = ((x-lastX)/loopTime - currentVel.getX())*w + currentVel.getX()*(1.0-w);
+        double newVelY = ((y-lastY)/loopTime - currentVel.getY())*w + currentVel.getY()*(1.0-w);
+        if (Math.abs(newVelX) < 1){
+            newVelX =0;
+        }
+        if (Math.abs(newVelY) < 1){
+            newVelY =0;
+        }
+        currentVel = new Pose2d(newVelX,newVelY,relVelHeading);
 
         lastX = x;
         lastY = y;
@@ -128,5 +135,6 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
             lastEncoders[i] = encoders[i];
         }
         currentPose = new Pose2d(x,y,heading);
+        lastRelVel = new Pose2d(relVelX,relVelY,relVelHeading);
     }
 }
