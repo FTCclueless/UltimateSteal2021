@@ -80,42 +80,41 @@ public class Localizer implements com.acmerobotics.roadrunner.localization.Local
         double deltaHeading = heading - lastHeading;
         double relDeltaY = deltaHorizontal/ticksToInches + deltaHeading*6.25;
 
-
         double relVelX = relDeltaX/loopTime;
         double relVelY = relDeltaY/loopTime;
         double relVelHeading = deltaHeading/loopTime;
         currentRelVel = new Pose2d(relVelX,relVelY,relVelHeading);
 
+        double numLoops = 50;
+        double simHeading = lastHeading;
 
-        /*
         double simDeltaHeading = (heading - lastHeading)/50.0;
         for (int i = 0; i < numLoops; i ++) {
+            simHeading += simDeltaHeading/2;
             x += Math.cos(simHeading) * relDeltaX/numLoops - Math.sin(simHeading) * relDeltaY/numLoops;
             y += Math.sin(simHeading) * relDeltaX/numLoops + Math.cos(simHeading) * relDeltaY/numLoops;
-            simHeading += simDeltaHeading;
+            simHeading += simDeltaHeading/2;
         }
-        */
 
-        double simHeading = lastHeading;
-        double numLoops = 50;
         double deltaVelHeading = currentRelVel.getHeading() - lastRelVel.getHeading();
         double deltaVelX = currentRelVel.getX() - lastRelVel.getX();
         double deltaVelY = currentRelVel.getY() - lastRelVel.getY();
         double t2 = Math.pow(numLoops,2);
-        for (int i = 0; i < numLoops; i ++) {
-            double pos = ((double)i)/t2;
-            double percentX =   (deltaVelX/(2.0*t2)       + deltaVelX * pos       + lastRelVel.getX()/numLoops)      /(lastRelVel.getX()+deltaVelX/2.0);
-            double percentY =   (deltaVelY/(2.0*t2)       + deltaVelY * pos       + lastRelVel.getY()/numLoops)      /(lastRelVel.getY()+deltaVelY/2.0);
-            double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
-            //robot doesn't know how to do L'hoptial
-            if ((lastRelVel.getY()+deltaVelY/2.0) == 0){percentY = 1/numLoops;}
-            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentX = 1/numLoops;}
-            if ((lastRelVel.getHeading()+deltaVelHeading/2.0) == 0){percentHed = 1/numLoops;}
-            simHeading += percentHed*deltaHeading/2.0;
-            x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
-            y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
-            simHeading += percentHed*deltaHeading/2.0;
-        }
+
+//        for (int i = 0; i < numLoops; i ++) {
+//            double pos = ((double)i)/t2;
+//            double percentX =   (deltaVelX/(2.0*t2)       + deltaVelX * pos       + lastRelVel.getX()/numLoops)      /(lastRelVel.getX()+deltaVelX/2.0);
+//            double percentY =   (deltaVelY/(2.0*t2)       + deltaVelY * pos       + lastRelVel.getY()/numLoops)      /(lastRelVel.getY()+deltaVelY/2.0);
+//            double percentHed = (deltaVelHeading/(2.0*t2) + deltaVelHeading * pos + lastRelVel.getHeading()/numLoops)/(lastRelVel.getHeading()+deltaVelHeading/2.0);
+//            //robot doesn't know how to do L'hoptial
+//            if ((lastRelVel.getY()+deltaVelY/2.0) == 0){percentY = 1/numLoops;}
+//            if ((lastRelVel.getX()+deltaVelX/2.0) == 0){percentX = 1/numLoops;}
+//            if ((lastRelVel.getHeading()+deltaVelHeading/2.0) == 0){percentHed = 1/numLoops;}
+//            simHeading += percentHed*deltaHeading/2.0;
+//            x += Math.cos(simHeading) * (relDeltaX * percentX) - Math.sin(simHeading) * (relDeltaY * percentY);
+//            y += Math.sin(simHeading) * (relDeltaX * percentX) + Math.cos(simHeading) * (relDeltaY * percentY);
+//            simHeading += percentHed*deltaHeading/2.0;
+//        }
 
         double w = 0.25;
         double newVelX = ((x-lastX)/loopTime - currentVel.getX())*w + currentVel.getX()*(1.0-w);
