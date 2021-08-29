@@ -7,12 +7,15 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
 /*
  * This is a simple routine to test translational drive capabilities.
  */
+
 @Config
 @Autonomous(group = "drive")
 public class StraightTest extends LinearOpMode {
@@ -24,15 +27,15 @@ public class StraightTest extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        Trajectory trajectory = drive.trajectoryBuilder(new Pose2d())
-                .forward(DISTANCE)
-                .build();
+        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        TrajectorySequence trajectory = drive.trajectorySequenceBuilder(new Pose2d(0,0,0)).forward(DISTANCE).build();
 
         waitForStart();
 
         if (isStopRequested()) return;
 
-        drive.followTrajectory(trajectory);
+        drive.followTrajectorySequence(trajectory);
 
         Pose2d poseEstimate = drive.getPoseEstimate();
         telemetry.addData("finalX", poseEstimate.getX());

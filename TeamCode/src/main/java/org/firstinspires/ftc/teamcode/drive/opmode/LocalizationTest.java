@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import android.util.Log;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -25,19 +27,24 @@ public class LocalizationTest extends LinearOpMode {
         waitForStart();
 
         while (!isStopRequested()) {
-            double forward = gamepad1.left_stick_y * -0.5;
-            double left = gamepad1.left_stick_x * 0.5;
-            double turn = gamepad1.right_stick_x * 0.5;
+            double forward = gamepad1.left_stick_y * -0.8;
+            double left = gamepad1.left_stick_x * 0.8;
+            double turn = gamepad1.right_stick_x * 0.8;
 
+//            drive.setMotorPowers((forward+left+turn), (forward-left+turn), (forward+left-turn), (forward-left-turn));
             drive.setMotorPowers((forward+left+turn), (forward-left+turn), (forward+left-turn), (forward-left-turn));
 
             drive.update();
-
 
             Pose2d poseEstimate = drive.getPoseEstimate();
             telemetry.addData("speedX", drive.currentVelocity.getX());
             telemetry.addData("speedY", drive.currentVelocity.getY());
             telemetry.addData("speedHeading", drive.currentVelocity.getHeading());
+
+            telemetry.addData("Forward", forward);
+            telemetry.addData("Left", left);
+            telemetry.addData("Turn", turn);
+
             telemetry.update();
 
         }
