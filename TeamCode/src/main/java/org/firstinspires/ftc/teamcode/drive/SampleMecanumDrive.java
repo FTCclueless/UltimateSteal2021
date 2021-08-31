@@ -97,7 +97,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     static RevBulkData bulkData;
     static ExpansionHubEx expansionHub1, expansionHub2;
-    static ExpansionHubMotor leftFront, leftRear, rightRear, rightFront;
+    static ExpansionHubMotor leftFront, leftRear, rightRear, rightFront, intakeMotor, linearSlidesMotor;
 
     private BNO055IMU imu;
 
@@ -148,7 +148,10 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         // add more motors here
 
-        // expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
+        expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
+        intakeMotor = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_0");
+        linearSlidesMotor = (ExpansionHubMotor) hardwareMap.dcMotor.get("slides_motor_1");
+
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
         for (DcMotorEx motor : motors) {
