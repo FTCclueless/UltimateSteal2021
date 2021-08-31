@@ -113,6 +113,10 @@ public class SampleMecanumDrive extends MecanumDrive {
     public Pose2d currentPose;
     public Pose2d currentVelocity;
 
+    public ButtonToggle buttonLift = new ButtonToggle();
+
+    public static int slidesEncoder;
+
     public SampleMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
@@ -149,8 +153,13 @@ public class SampleMecanumDrive extends MecanumDrive {
         // add more motors here
 
         expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
-        intakeMotor = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_0");
-        linearSlidesMotor = (ExpansionHubMotor) hardwareMap.dcMotor.get("slides_motor_1");
+        intakeMotor         = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_0");
+        linearSlidesMotor   = (ExpansionHubMotor) hardwareMap.dcMotor.get("slides_motor_1");
+
+        linearSlidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        linearSlidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -194,6 +203,8 @@ public class SampleMecanumDrive extends MecanumDrive {
         encoders[2] = bulkData.getMotorCurrentPosition(rightRear);
         //bulkData.getMotorCurrentPosition(leftFront); this is how to get the data
         // you can set the bulkData to the other expansion hub to get data from the other one
+        bulkData = expansionHub2.getBulkInputData();
+        slidesEncoder = bulkData.getMotorCurrentPosition(linearSlidesMotor);
     }
 
     public void turnAsync(double angle) {
@@ -272,9 +283,18 @@ public class SampleMecanumDrive extends MecanumDrive {
         Log.e("averageLoopTime","" + totalTime/(double)loops);
 
         DriveSignal signal = trajectorySequenceRunner.update(currentPose, currentVelocity);
-        Log.e("signal", signal.toString());
+
+        if(buttonLift.getToggleState()) {
+            linearSlidesMotor.setPower(1.0);
+            linearSlidesMotor.setTargetPosition(10000);
+        } else {
+            linearSlidesMotor.setPower(0.15);
+            linearSlidesMotor.setTargetPosition(0);
+        }
+
 
         if (signal != null) {
+            Log.e("signal", signal.toString());
             double forward = (signal.component1().component1() * kV) + (signal.component2().component1() * kA);
             double left = (signal.component1().component2() * kV * LATERAL_MULTIPLIER) + (signal.component2().component2() * kA * LATERAL_MULTIPLIER);
             double turn = (signal.component1().component3() * kV) + (signal.component2().component3() * kA);
@@ -308,24 +328,12 @@ public class SampleMecanumDrive extends MecanumDrive {
             if (p4 != 0){
                 p4 += kStatic*Math.signum(p4);
             }
-
-            if (loops % 6 == 1){
-                leftFront.setPower(p1);
+            switch (loops % 6){
+                case 1: leftFront.setPower(p1); break;
+                case 2: leftRear.setPower(p2); break;
+                case 4: rightRear.setPower(p3); break;
+                case 5: rightFront.setPower(p4); break;
             }
-            if (loops % 6 == 2){
-                rightRear.setPower(p2);
-            }
-            if (loops % 6 == 4){
-                rightRear.setPower(p3);
-            }
-            if (loops % 6 == 5){
-                rightFront.setPower(p4);
-            }
-
-            setMotorPowers(p1, p2, p3, p4);
-
-            //setDriveSignal(signal);
-            Log.e("signal", "working");
         }
     }
 

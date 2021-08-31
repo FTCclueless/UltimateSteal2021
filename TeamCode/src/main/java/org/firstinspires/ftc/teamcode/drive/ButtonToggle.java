@@ -2,17 +2,16 @@ package org.firstinspires.ftc.teamcode.drive;
 
 public class ButtonToggle {
     public boolean toggleState = false;
-    private boolean buttonIsActive = false;
-    public boolean toggled(boolean buttonPressed) { // button is pressed = true
 
-        if(buttonPressed && (buttonIsActive == false)) {
-            buttonIsActive = true;
-            toggleState = !toggleState; // true
-            return true;
+    public boolean lastButtonPressed = false;
+    public void update(boolean buttonPressed) { // button is pressed = true
+
+        if(buttonPressed && !lastButtonPressed){
+            toggleState = !toggleState;
         }
-        else if(!buttonPressed) {
-            buttonIsActive = false;
-        }
-        return false;
+        lastButtonPressed = buttonPressed;
+    }
+    public boolean getToggleState() {
+        return toggleState;
     }
 }

@@ -8,19 +8,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior;
 import org.firstinspires.ftc.teamcode.drive.ButtonToggle;
 
-@TeleOp(name="Linear Slide Test", group="Iterative Opmode")
+@TeleOp(name="LinearSlideTest", group="Iterative Opmode")
 
 public class LinearSlideTest extends OpMode{
     // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-
-    private ButtonToggle buttonY2 = new ButtonToggle();
-
     public int position = 0;
+    SampleMecanumDrive drive;
 
     @Override
     public void init() {
-        telemetry.addData("Status", "Initialized");
+        drive = new SampleMecanumDrive(hardwareMap);
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
@@ -29,29 +26,16 @@ public class LinearSlideTest extends OpMode{
 //        linearSlideMotor.setDirection(DcMotor.Direction.FORWARD);
 //        linearSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        SampleMecanumDrive.linearSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         //driveTrain.init(hardwareMap);
     }
 
     @Override
     public void loop() {
-        position = SampleMecanumDrive.linearSlidesMotor.getCurrentPosition();
-        SampleMecanumDrive.linearSlidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-        if(buttonY2.toggled(true)) {
-            if(position < 100 ) { //default val
-                SampleMecanumDrive.linearSlidesMotor.setPower(1.0);
-            }
-            else {
-                SampleMecanumDrive.linearSlidesMotor.setPower(0.0);
-            }
-        }
-
-        SampleMecanumDrive.linearSlidesMotor.setPower(1.0);
-
-        telemetry.addData("Linear Slides Motor Position", position);
+        drive.buttonLift.update(gamepad1.y);
+        drive.update();
+        telemetry.addData("Linear Slides Motor Position", drive.slidesEncoder);
+        telemetry.addData("toggle state", drive.buttonLift.getToggleState());
+        telemetry.update();
     }
 
 }
