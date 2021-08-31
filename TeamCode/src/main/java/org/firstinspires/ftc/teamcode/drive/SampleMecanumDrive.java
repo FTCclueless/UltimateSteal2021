@@ -5,9 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
@@ -15,19 +13,14 @@ import com.acmerobotics.roadrunner.drive.MecanumDrive;
 import com.acmerobotics.roadrunner.followers.HolonomicPIDVAFollower;
 import com.acmerobotics.roadrunner.followers.TrajectoryFollower;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.profile.MotionProfile;
-import com.acmerobotics.roadrunner.profile.MotionProfileGenerator;
-import com.acmerobotics.roadrunner.profile.MotionState;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
-import com.acmerobotics.roadrunner.trajectory.TrajectoryMarker;
 import com.acmerobotics.roadrunner.trajectory.constraints.AngularVelocityConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.MinVelocityConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.ProfileAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
-import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -41,7 +34,6 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunner;
-import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
@@ -113,7 +105,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     public Pose2d currentPose;
     public Pose2d currentVelocity;
 
-    public ButtonToggle buttonLift = new ButtonToggle();
+    public ButtonToggle slidesLift = new ButtonToggle();
+    public ButtonToggle controlIntake = new ButtonToggle();
 
     public static int slidesEncoder;
 
@@ -160,6 +153,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         linearSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         linearSlidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -284,12 +278,19 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         DriveSignal signal = trajectorySequenceRunner.update(currentPose, currentVelocity);
 
-        if(buttonLift.getToggleState()) {
+        if(slidesLift.getToggleState()) {
             linearSlidesMotor.setPower(1.0);
             linearSlidesMotor.setTargetPosition(10000);
         } else {
             linearSlidesMotor.setPower(0.15);
             linearSlidesMotor.setTargetPosition(0);
+        }
+
+        if(controlIntake.getToggleState()) {
+            intakeMotor.setPower(1.0);
+        }
+        else {
+            intakeMotor.setPower(0.0);
         }
 
 
