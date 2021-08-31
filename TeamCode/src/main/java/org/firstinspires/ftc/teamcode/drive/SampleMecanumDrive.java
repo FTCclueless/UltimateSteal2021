@@ -68,8 +68,8 @@ import static org.firstinspires.ftc.teamcode.drive.DriveConstants.kV;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive {
-    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(7.5, 0.15,0.5);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(30, 0.5, 2);
+    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(7, 0.075,0.5);
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(100, 10, 0);
 
     private FtcDashboard dashboard;
     private ArrayList<Pose2d> poseHistory;
@@ -80,7 +80,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     private String TAG = "SampleTankDrive";
 
-    public static double LATERAL_MULTIPLIER = 1.5;
+    public static double LATERAL_MULTIPLIER = 1.75;
 
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
@@ -275,14 +275,9 @@ public class SampleMecanumDrive extends MecanumDrive {
         Log.e("signal", signal.toString());
 
         if (signal != null) {
-            double forward = signal.component1().component1() * kV;
-            double left = signal.component1().component2() * kV * LATERAL_MULTIPLIER;
-            double turn = signal.component1().component3() * kV;
-
-//            Log.e("forward", forward + " ");
-//            Log.e("component1", signal.component1().component1() * kV + " ");
-//            Log.e("component2", signal.component1().component2() * kV + " ");
-//            Log.e("component3", signal.component1().component3() * kV + " ");
+            double forward = (signal.component1().component1() * kV) + (signal.component2().component1() * kA);
+            double left = (signal.component1().component2() * kV * LATERAL_MULTIPLIER) + (signal.component2().component2() * kA * LATERAL_MULTIPLIER);
+            double turn = (signal.component1().component3() * kV) + (signal.component2().component3() * kA);
 
             double p1 = forward-left-turn;
             double p2 = forward+left-turn;
@@ -314,17 +309,20 @@ public class SampleMecanumDrive extends MecanumDrive {
                 p4 += kStatic*Math.signum(p4);
             }
 
-            //Log.e("p1", p1 + "");
-            //Log.e("p2", p2 + "");
-            //Log.e("p3", p3 + "");
-            //Log.e("p4", p4 + "");
-            //Log.e("Current Velocity:", currentVelocity.toString());
+            if (loops % 6 == 1){
+                leftFront.setPower(p1);
+            }
+            if (loops % 6 == 2){
+                rightRear.setPower(p2);
+            }
+            if (loops % 6 == 4){
+                rightRear.setPower(p3);
+            }
+            if (loops % 6 == 5){
+                rightFront.setPower(p4);
+            }
 
             setMotorPowers(p1, p2, p3, p4);
-//            leftFront.setPower(0.5);
-//            leftRear.setPower(0.5);
-//            rightRear.setPower(0.5);
-//            rightFront.setPower(0.5);
 
             //setDriveSignal(signal);
             Log.e("signal", "working");
