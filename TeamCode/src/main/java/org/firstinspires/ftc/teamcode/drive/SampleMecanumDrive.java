@@ -146,11 +146,11 @@ public class SampleMecanumDrive extends MecanumDrive {
         // add more motors here
 
         expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
-        intakeMotor         = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_0");
         linearSlidesMotor   = (ExpansionHubMotor) hardwareMap.dcMotor.get("slides_motor_1");
+        intakeMotor         = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_2");
 
         linearSlidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         linearSlidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -279,11 +279,11 @@ public class SampleMecanumDrive extends MecanumDrive {
         DriveSignal signal = trajectorySequenceRunner.update(currentPose, currentVelocity);
 
         if(slidesLift.getToggleState()) {
+            linearSlidesMotor.setTargetPosition(6000);
             linearSlidesMotor.setPower(1.0);
-            linearSlidesMotor.setTargetPosition(10000);
         } else {
-            linearSlidesMotor.setPower(0.15);
             linearSlidesMotor.setTargetPosition(0);
+            linearSlidesMotor.setPower(1.0);
         }
 
         if(controlIntake.getToggleState()) {
