@@ -27,6 +27,8 @@ public class Teleop extends LinearOpMode {
 
     //Controller 2
 
+    private ButtonToggle buttonA1 = new ButtonToggle();
+
     private ButtonToggle buttonA2 = new ButtonToggle();
     private ButtonToggle buttonY2 = new ButtonToggle();
 
@@ -60,6 +62,7 @@ public class Teleop extends LinearOpMode {
             drive.slidesLift.update(gamepad2.y); // Controlling Linear Slides Motor
             drive.controlIntake.update(gamepad2.a); // Controlling Intake Motor
             drive.controlServo.update(gamepad1.b); // Controlling Dropper Servo
+            drive.controlCapstoneServo.update(gamepad1.a);//Controlling Capstone Servo
 
             drive.setMotorPowers((forward + left + turn), (forward - left + turn), (forward + left - turn), (forward - left - turn));
 

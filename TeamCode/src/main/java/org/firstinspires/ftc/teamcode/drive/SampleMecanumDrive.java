@@ -95,7 +95,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     static ExpansionHubEx expansionHub1, expansionHub2;
     static ExpansionHubMotor leftFront, leftRear, rightRear, rightFront, intakeMotor, linearSlidesMotor;
 
-    static ExpansionHubServo dropperServo;
+    static ExpansionHubServo dropperServo, capstoneServo;
 
     private BNO055IMU imu;
 
@@ -114,6 +114,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     public ButtonToggle slidesLift = new ButtonToggle();
     public ButtonToggle controlIntake = new ButtonToggle();
     public ButtonToggle controlServo = new ButtonToggle();
+    public ButtonToggle controlCapstoneServo = new ButtonToggle();
 
     public static int slidesEncoder;
 
@@ -157,6 +158,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         intakeMotor         = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_2");
 
         dropperServo = hardwareMap.get(ExpansionHubServo.class, "dropper_servo_0");
+        capstoneServo = hardwareMap.get(ExpansionHubServo.class, "capstone_servo_1");
 
         linearSlidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -305,12 +307,20 @@ public class SampleMecanumDrive extends MecanumDrive {
             intakeMotor.setPower(0.0);
         }
 
-        //Dropper Servo
+        //Dumpster Dropper Servo
         if(controlServo.getToggleState()) {
             dropperServo.setPosition(1.0);
         }
         else {
             dropperServo.setPosition(0.0);
+        }
+
+        //Capstone Servo
+        if(controlCapstoneServo.getToggleState()) {
+            capstoneServo.setPosition(1.0);
+        }
+        else {
+            capstoneServo.setPosition(0.0);
         }
 
 
