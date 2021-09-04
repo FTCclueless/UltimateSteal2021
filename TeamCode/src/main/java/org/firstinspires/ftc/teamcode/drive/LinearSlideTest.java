@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 public class LinearSlideTest extends OpMode{
     // Declare OpMode members.
-    public int position = 0;
+//    public int position = 0;
     SampleMecanumDrive drive;
 
     @Override

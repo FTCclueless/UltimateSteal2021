@@ -27,14 +27,18 @@ public class Teleop extends LinearOpMode {
 
     //Controller 2
 
+    private ButtonToggle buttonA1 = new ButtonToggle();
+
     private ButtonToggle buttonA2 = new ButtonToggle();
     private ButtonToggle buttonY2 = new ButtonToggle();
 
     private boolean slowMode = false;
 
+    SampleMecanumDrive drive;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -45,50 +49,22 @@ public class Teleop extends LinearOpMode {
             double left = gamepad1.left_stick_x * 0.75;
             double turn = gamepad1.right_stick_x * 0.75;
 
-//            if(button_rb.toggled(gamepad1.right_bumper)) {
+//            if(drive.controlMotors.update(gamepad1.right_bumper)) {
 //                slowMode = !slowMode;
 //            }
 
-            if(slowMode == true){
+            if (slowMode == true) {
                 forward = gamepad1.left_stick_y * -0.45;
                 left = gamepad1.left_stick_x * 0.45;
                 turn = gamepad1.right_stick_x * 0.45;
             }
 
-//            if(buttonA2.toggled(gamepad2.a)) {
-//                if(buttonA2.toggleState()) {
-//                    intakeMotor.setPower(1.0);
-//                }
-//                else {
-//                    intakeMotor.setPower(0.0);
-//                }
-//            }
+            drive.slidesLift.update(gamepad2.y); // Controlling Linear Slides Motor
+            drive.controlIntake.update(gamepad2.a); // Controlling Intake Motor
+            drive.controlServo.update(gamepad1.b); // Controlling Dropper Servo
+            drive.controlCapstoneServo.update(gamepad1.a);//Controlling Capstone Servo
 
-//            if(buttonA2.toggled(gamepad2.a)) {
-//                    SampleMecanumDrive.intakeMotor.setPower(1.0);
-//                }
-//                else {
-//                    SampleMecanumDrive.intakeMotor.setPower(0.0);
-//                }
-
-//            if(buttonY2.toggled(gamepad2.y)) {
-//                if(buttonY2.toggleState()) {
-//                    linearSlidesMotor.setPower(1.0);
-//                }
-//                else {
-//                    linearSlidesMotor.setPower(0.0);
-//                }
-//            }
-
-            //NEEDS TO BE UPDATED
-//            if(buttonY2.toggled(gamepad2.y)) {
-//                SampleMecanumDrive.linearSlidesMotor.setPower(1.0);
-//            }
-//                else {
-//                    SampleMecanumDrive.linearSlidesMotor.setPower(0.0);
-//                }
-
-            drive.setMotorPowers((forward+left+turn), (forward-left+turn), (forward+left-turn), (forward-left-turn));
+            drive.setMotorPowers((forward + left + turn), (forward - left + turn), (forward + left - turn), (forward - left - turn));
 
             drive.update();
 
