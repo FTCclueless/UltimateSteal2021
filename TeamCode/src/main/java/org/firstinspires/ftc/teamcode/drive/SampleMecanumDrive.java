@@ -107,6 +107,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public ButtonToggle slidesLift = new ButtonToggle();
     public ButtonToggle controlIntake = new ButtonToggle();
+    public ButtonToggle 
 
     public static int slidesEncoder;
 
