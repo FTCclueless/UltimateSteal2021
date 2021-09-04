@@ -166,6 +166,8 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
+//        dropperServo.setDirection(Servo.Direction.REVERSE);
+
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
         for (DcMotorEx motor : motors) {
@@ -291,7 +293,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         //Linear Slides Motor
         if(slidesLift.getToggleState()) {
-            linearSlidesMotor.setTargetPosition(6000);
+            linearSlidesMotor.setTargetPosition(10000);
             linearSlidesMotor.setPower(1.0);
         } else {
             linearSlidesMotor.setTargetPosition(0);
