@@ -47,10 +47,10 @@ public class Teleop extends LinearOpMode {
             double left = gamepad1.left_stick_x * 0.75;
             double turn = gamepad1.right_stick_x * 0.75;
 
-//            if(button_rb.update(gamepad1.right_bumper)) {
+//            if(drive.controlMotors.update(gamepad1.right_bumper)) {
 //                slowMode = !slowMode;
 //            }
-//
+
             if (slowMode == true) {
                 forward = gamepad1.left_stick_y * -0.45;
                 left = gamepad1.left_stick_x * 0.45;

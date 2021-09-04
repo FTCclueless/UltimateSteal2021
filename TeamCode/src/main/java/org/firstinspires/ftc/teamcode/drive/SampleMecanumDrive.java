@@ -158,9 +158,8 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         dropperServo = hardwareMap.get(ExpansionHubServo.class, "dropper_servo_0");
 
-
         linearSlidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         linearSlidesMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -296,6 +295,7 @@ public class SampleMecanumDrive extends MecanumDrive {
             linearSlidesMotor.setTargetPosition(0);
             linearSlidesMotor.setPower(1.0);
         }
+        linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         //Intake Motor
         if(controlIntake.getToggleState()) {
