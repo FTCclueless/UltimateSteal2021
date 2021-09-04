@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive;
 
 import android.util.Log;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 
@@ -28,6 +29,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
@@ -37,6 +40,7 @@ import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunne
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.ExpansionHubServo;
 import org.openftc.revextensions2.RevBulkData;
 
 import java.util.ArrayList;
@@ -91,6 +95,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     static ExpansionHubEx expansionHub1, expansionHub2;
     static ExpansionHubMotor leftFront, leftRear, rightRear, rightFront, intakeMotor, linearSlidesMotor;
 
+    static ExpansionHubServo dropperServo;
+
     private BNO055IMU imu;
 
     private VoltageSensor batteryVoltageSensor;
@@ -107,7 +113,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
     public ButtonToggle slidesLift = new ButtonToggle();
     public ButtonToggle controlIntake = new ButtonToggle();
-    public ButtonToggle 
+    public ButtonToggle controlServo = new ButtonToggle();
 
     public static int slidesEncoder;
 
@@ -149,6 +155,9 @@ public class SampleMecanumDrive extends MecanumDrive {
         expansionHub2 = hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2");
         linearSlidesMotor   = (ExpansionHubMotor) hardwareMap.dcMotor.get("slides_motor_1");
         intakeMotor         = (ExpansionHubMotor) hardwareMap.dcMotor.get("intake_motor_2");
+
+        dropperServo = hardwareMap.get(ExpansionHubServo.class, "dropper_servo_0");
+
 
         linearSlidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         linearSlidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -279,6 +288,7 @@ public class SampleMecanumDrive extends MecanumDrive {
 
         DriveSignal signal = trajectorySequenceRunner.update(currentPose, currentVelocity);
 
+        //Linear Slides Motor
         if(slidesLift.getToggleState()) {
             linearSlidesMotor.setTargetPosition(6000);
             linearSlidesMotor.setPower(1.0);
@@ -287,11 +297,20 @@ public class SampleMecanumDrive extends MecanumDrive {
             linearSlidesMotor.setPower(1.0);
         }
 
+        //Intake Motor
         if(controlIntake.getToggleState()) {
             intakeMotor.setPower(1.0);
         }
         else {
             intakeMotor.setPower(0.0);
+        }
+
+        //Dropper Servo
+        if(controlServo.getToggleState()) {
+            dropperServo.setPosition(1.0);
+        }
+        else {
+            dropperServo.setPosition(0.0);
         }
 
 
